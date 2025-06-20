@@ -23,6 +23,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/test-phpinfo', function () {
+    phpinfo();
+});
+
 Route::get('/test-read/{id}', function ($id) {
     $document = Document::find($id);
     if (!$document) {
@@ -91,6 +95,11 @@ Route::get('/test-embed', function () {
     ]);
 });
 
+Route::get('/create-collection', function () {
+    $result = \App\Services\QdrantService::createCollection('doc_chunks');
+    return response()->json($result);
+});
+
 Route::get('/train/{id}', function ($id) {
     $document = Document::find($id);
     if (!$document) {
@@ -109,7 +118,7 @@ Route::get('/train/{id}', function ($id) {
             'text' => $chunk,
         ];
 
-       $point = [
+        $point = [
             'id' => $document->id * 1000 + $index,
             'vector' => $embedding,
             'payload' => $payload
