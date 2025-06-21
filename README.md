@@ -60,9 +60,8 @@ QDRANT_HOST=http://localhost:6333
 ### 2. Build và chạy container Docker
 ```bash
 docker-compose up -d --build
+docker-compose exec app composer install
 docker-compose exec app php artisan key:generate
-docker-compose exec app php artisan migrate
-docker-compose exec app php artisan config:clear
 docker-compose exec app php artisan migrate
 ```
 ### 3. Import file json API Postman có sẵn trong source
@@ -281,53 +280,286 @@ Bộ API hỗ trợ upload tài liệu, trích xuất văn bản, sinh vector em
 
 # 📘 English Version
 
-## 🤖 Internal Document Chatbot (Laravel + OpenAI + Qdrant)
+# 📚 Internal Document Chatbot (Laravel + OpenAI + Qdrant)
 
-This chatbot system is designed for internal document-based Q&A. It **only answers based on trained documents**, without using external knowledge sources.
-
-### 🧩 Technologies Used
-
-| Component         | Technology                         |
-|-------------------|-------------------------------------|
-| Backend           | Laravel 10                          |
-| AI Chat & Embedding | OpenAI GPT-3.5 / GPT-4            |
-| Vector DB         | Qdrant                              |
-| PDF Parser        | smalot/pdfparser                    |
-| Word Parser       | phpoffice/phpword                   |
-| HTTP              | guzzlehttp/guzzle                   |
-| Logging           | Eloquent (MySQL / SQLite)           |
-
-### ✅ Key Features
-
-- Answer questions based on internal files: PDF, DOCX, CSV, HTML, URL
-- Automatic text extraction and chunking for embeddings
-- Embedding vector search using Qdrant ANN
-- Avoids hallucination — throws clear error when no match found
-- Uses OpenAI GPT to generate final answers
-
-### ⚙️ Workflow
-
-1. Upload document
-2. Parse & split into chunks
-3. Generate embedding via OpenAI
-4. Store in Qdrant
-5. At question time: embed → search Qdrant → send to GPT → respond
-
-### 📈 Why Qdrant over MySQL?
-
-- Optimized for vector search (cosine, dot-product)
-- Fast real-time response even with millions of vectors
-- Supports ANN index, metadata, REST API
-- MySQL is slower, lacks native vector search
-
-> See full comparison tables above ☝️
-
-### 🔗 API Examples
-
-- `POST /api/chat` – Ask a question
-- `GET /train/{id}` – Train uploaded document
-- `GET /test-url?url=...` – Parse content from website
-- `GET /create-collection` – Create Qdrant collection
-- `GET /reindex` – Rebuild vector index
+📌 *Vietnamese version is above. This is the English version.*
 
 ---
+
+## 🧩 Technologies Used
+
+| Component               | Technology                               |
+| ----------------------- | ---------------------------------------- |
+| Backend                 | Laravel 10                               |
+| Artificial Intelligence | OpenAI GPT-3.5 (chat), OpenAI Embeddings |
+| Vector Database         | Qdrant                                   |
+| PDF Extraction          | smalot/pdfparser                         |
+| Word Extraction         | phpoffice/phpword                        |
+| HTTP Client             | guzzlehttp/guzzle                        |
+| Logging                 | Eloquent (MySQL / SQLite)                |
+| Web Server              | Nginx (running in Docker)                |
+| Environment Management  | Docker + Docker Compose                  |
+
+---
+
+### 🔹 Why Qdrant over MySQL?
+
+| Feature                                | Qdrant (Vector DB)                | MySQL (Traditional RDBMS)               |
+| -------------------------------------- | --------------------------------- | --------------------------------------- |
+| **Store numerical vector (embedding)** | ✅ Purpose-built                   | ⚠️ Stored as JSON or TEXT (not optimal) |
+| **Semantic similarity search**         | ✅ Built-in cosine / dot product   | ❌ Not supported, must code manually     |
+| **Top-k nearest neighbors (ANN)**      | ✅ Fast with HNSW / IVF structures | ❌ Requires full data load to compare    |
+| **Scale to millions of vectors**       | ✅ Efficient and scalable          | ❌ Slow and heavy (TEXT/JSON data)       |
+| **Vector search API support**          | ✅ Has RESTful / GRPC              | ❌ None                                  |
+| **Metadata support**                   | ✅ Attach text, ID, file, etc.     | ⚠️ Available but not linked with vector |
+| **AI / Chatbot use case**              | ✅ Standard in RAG, AI search      | ❌ Not suitable                          |
+
+---
+
+### ⚡ Embedding Performance Comparison
+
+| Criteria                                 | Qdrant (Vector DB)                | MySQL (embedding as JSON)             |
+| ---------------------------------------- | --------------------------------- | ------------------------------------- |
+| **Optimized for vector search**          | ✅ Yes (ANN index, HNSW, IVF...)   | ❌ No                                  |
+| **Top-k similarity search (cosine/dot)** | ✅ Few milliseconds                | ❌ Very slow if > 5000 rows            |
+| **Indexing for vectors**                 | ✅ Built-in                        | ❌ None                                |
+| **Large scale performance**              | ✅ Smooth with millions of vectors | ❌ Heavy queries when many rows        |
+| **Real-time queries (chatbot)**          | ✅ Optimized for realtime          | ❌ Laggy if comparing embedding in PHP |
+
+---
+
+## 📦 Deployment & Environment
+
+### Sample `.env` file:
+
+```env
+OPENAI_API_KEY=your_openai_key_here
+QDRANT_HOST=http://localhost:6333
+```
+
+---
+
+## 🚀 How to Run the Project
+
+### 1. Preparation
+
+* Copy `.env.example` to `.env` and update values
+
+### 2. Build and start Docker containers
+
+```bash
+docker-compose up -d --build
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate
+```
+
+### 3. Import Postman JSON file
+
+* Located at: `Chatbot/chatbot_qdrant.postman_collection.json`
+
+---
+
+## 👨‍💻 Notes
+
+* The bot performs best when the text is **evenly chunked**, avoid long segments (>200 words)
+* HTML / URL documents should have **script, style, meta, and inline JS/CSS removed**
+* Easy to **extend ChatLog by user** if login system is integrated
+* Avoid asking questions **outside trained document scope** – bot will not answer accurately
+
+---
+
+## ✅ Key Features
+
+* 🤖 Answer questions based on PDF, DOCX, CSV, HTML, URL content
+* 📎 Extract, chunk, and embed content into Qdrant
+* 🧠 Recognize similar questions for consistent answers
+* 🛑 No hallucinations – clear error if content not found
+* 💬 Uses OpenAI (GPT-3.5/4) to generate context-aware answers
+
+---
+
+## ⚙️ System Workflow
+
+### 1. Training Documents
+
+1. **Upload document** → stored in `storage/app/`
+2. **Extract content** using `DocumentParser`
+3. **Chunk the text** using `TextChunker`
+4. **Create embeddings** for each chunk via OpenAI
+5. **Store in Qdrant** with `document_id`, `chunk_index`, and text
+
+### 2. Answering Questions
+
+1. **Embed the question** using OpenAI
+2. **Compare with previous questions** in `chat_logs`
+
+   * If cosine distance < 0.04 → reuse old answer
+3. **Search for closest chunks** in Qdrant
+4. **If no matching chunk** → return 404 error
+5. **Send context + question to OpenAI GPT**
+6. **Store logs**: question, embedding, answer
+
+---
+
+## 🧱 Project Structure
+
+| File / Class     | Purpose                                            |
+| ---------------- | -------------------------------------------------- |
+| `ChatController` | Handles Q\&A logic and context matching            |
+| `DocumentParser` | Extracts content from PDF, DOCX, CSV, HTML, URL    |
+| `TextChunker`    | Splits text into chunks for training               |
+| `Embedder`       | Calls OpenAI to generate embedding vectors         |
+| `QdrantService`  | Manages Qdrant: collections, inserts, searches     |
+| `ChatLog`        | Model for storing question, answer, and embeddings |
+
+---
+
+## 🔄 API Endpoints
+
+### 🧠 Main Chat Endpoint
+
+* `POST /api/ask`
+  Ask question → receive chatbot response
+  **Body:** `{ "question": "..." }`
+  **Response:** `{ "answer": "..." }`
+
+---
+
+### 📄 Document Training
+
+* `GET /train/{id}` – Train document by ID
+* `GET /train-url?url=https://...` – Train content from a web page (text only)
+
+---
+
+### 🛠 Debugging Utilities
+
+* `GET /test-read/{id}` – Read file content
+* `GET /test-chunk/{id}` – View chunk preview
+* `GET /test-embed` – Test generating embedding
+* `GET /create-collection` – Create new Qdrant collection
+* `GET /reindex` – Re-index collection after updates
+* `GET /debug-vectors/{id}` – Inspect stored vector
+
+---
+
+## 📌 Important Notes
+
+* Bot **only answers based on trained documents**. No context → 404 or custom error message.
+* Duplicate or similar questions → returns previously stored answers.
+* HTML/URL documents **automatically remove JS, CSS, meta** to reduce noise.
+
+---
+
+## 🧠 Matching Previous Questions Logic
+
+```php
+foreach ($pastLogs as $log) {
+ $pastVector = json_decode($log->embedding, true);
+ $distance = cosineDistance($newEmbedding, $pastVector);
+ if ($distance < 0.04) {
+     return $log->answer;
+ }
+}
+```
+
+---
+
+## 📘 Postman API Collection - `chatbot_qdrant`
+
+APIs for uploading, extracting, chunking, embedding, training, and chatting with the AI.
+
+---
+
+### 🔹 Upload & Extract
+
+#### `POST /api/upload`
+
+* Upload document (PDF, DOCX, CSV, HTML)
+* **Body:** `form-data`
+
+  * `file`: Document file
+
+#### `GET /test-read/{id}`
+
+* Read extracted content by document ID
+
+#### `GET /test-url?url=...`
+
+* Extract text from any given URL
+
+---
+
+### 🔹 Chunk & Embed
+
+#### `GET /test-chunk/{id}`
+
+* Chunk document text into small segments
+
+#### `GET /test-chunk-url?url=...`
+
+* Chunk text from a given URL
+
+#### `GET /test-embed`
+
+* Test embedding API on a sample text
+
+---
+
+### 🔹 Train Data into Qdrant
+
+#### `GET /create-collection`
+
+* Create `doc_chunks` collection in Qdrant
+
+#### `GET /train/{id}`
+
+* Train document content into Qdrant
+
+#### `GET /train-url?url=...`
+
+* Train content from a URL into Qdrant
+
+---
+
+### 🔹 Ask Questions
+
+#### `POST /api/chat`
+
+* Ask a question and get AI-generated answer from trained content
+* **Body:** `form-data`
+
+  * `question`: Your question
+
+---
+
+### 🔹 Manage Qdrant Data
+
+#### `GET /reindex`
+
+* Rebuild Qdrant index
+
+#### `GET http://localhost:6333/collections/doc_chunks`
+
+* View collection metadata
+
+#### `GET http://localhost:6333/collections/doc_chunks/points/{id}`
+
+* View individual vector by ID
+
+#### `POST http://localhost:6333/collections/doc_chunks/points/scroll`
+
+* Scroll through all points in collection
+
+#### `DELETE http://localhost:6333/collections/doc_chunks`
+
+* ⚠️ **Delete entire collection** from Qdrant
+
+---
+
+## 📌 Final Notes
+
+* Ensure Docker containers (`Laravel`, `Qdrant`, `MySQL`) are running before using API
+* Text is chunked to \~200 words before embedding
+* The chatbot strictly answers based on trained documents only
