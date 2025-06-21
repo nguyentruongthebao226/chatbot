@@ -65,6 +65,8 @@ docker-compose exec app php artisan migrate
 docker-compose exec app php artisan config:clear
 docker-compose exec app php artisan migrate
 ```
+### 3. Import file json API Postman có sẵn trong source
+- Chatbot\chatbot_qdrant.postman_collection.json
 
 ---
 

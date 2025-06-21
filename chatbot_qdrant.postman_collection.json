@@ -1,0 +1,387 @@
+{
+	"info": {
+		"_postman_id": "768373e9-d1ce-4101-8f4f-d2dc510e1ace",
+		"name": "chatbot_qdrant",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19866159"
+	},
+	"item": [
+		{
+			"name": "Upload file document",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "postman-cloud:///1f04d15f-68a3-44f0-8deb-44cbf9b56166"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/upload?",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"upload"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Read document content",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/test-read/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"test-read",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Read document content Url",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/test-url?url=https://vnexpress.net/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"test-url"
+					],
+					"query": [
+						{
+							"key": "url",
+							"value": "https://vnexpress.net/"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test: split from File",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/test-chunk/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"test-chunk",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test: split from Url",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/test-chunk-url?url=https://vnexpress.net/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"test-chunk-url"
+					],
+					"query": [
+						{
+							"key": "url",
+							"value": "https://vnexpress.net/"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Test: embed",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/test-embed",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"test-embed"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create collection Qdrant",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/create-collection",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"create-collection"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Train document",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/train/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"train",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Train website",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/train-url?url=https://www.starry.group/why-us/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"train-url"
+					],
+					"query": [
+						{
+							"key": "url",
+							"value": "https://www.starry.group/why-us/"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Submit questions to bot",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "question",
+							"value": "giới thiệu công ty Vinagame giúp tôi",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/chat",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"chat"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check doc_chunks Qdrant",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6333/collections/doc_chunks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6333",
+					"path": [
+						"collections",
+						"doc_chunks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check point in Qdrant",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6333/collections/doc_chunks/points/1000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6333",
+					"path": [
+						"collections",
+						"doc_chunks",
+						"points",
+						"1000"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete doc_chunks Qdrant",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6333/collections/doc_chunks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6333",
+					"path": [
+						"collections",
+						"doc_chunks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check collection Qdrant",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"limit\": 50\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6333/collections/doc_chunks/points/scroll",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6333",
+					"path": [
+						"collections",
+						"doc_chunks",
+						"points",
+						"scroll"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Debug vectors after train",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/debug-vectors/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"debug-vectors",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reindex",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/reindex",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"reindex"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
