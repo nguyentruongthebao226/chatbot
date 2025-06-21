@@ -1,4 +1,5 @@
-# 📚 Internal Document Chatbot (Laravel + OpenAI + Qdrant)
+📘 *English version below*
+# 📚 Chatbot tài liệu nội bộ - Internal Document Chatbot (Laravel + OpenAI + Qdrant)
 
 Hệ thống chatbot nội bộ sử dụng tài liệu công ty để trả lời câu hỏi. Chatbot **chỉ dựa trên tài liệu đã train**, không được phép sử dụng kiến thức bên ngoài.
 
@@ -252,3 +253,60 @@ Bộ API hỗ trợ upload tài liệu, trích xuất văn bản, sinh vector em
 - Tài liệu sẽ được chia thành nhiều đoạn nhỏ (~200 từ) trước khi embedding vào Qdrant.
 - Chatbot chỉ trả lời dựa trên tài liệu đã train. Không bịa thông tin bên ngoài.
 
+--- 
+---
+---
+---
+
+# 📘 English Version
+
+## 🤖 Internal Document Chatbot (Laravel + OpenAI + Qdrant)
+
+This chatbot system is designed for internal document-based Q&A. It **only answers based on trained documents**, without using external knowledge sources.
+
+### 🧩 Technologies Used
+
+| Component         | Technology                         |
+|-------------------|-------------------------------------|
+| Backend           | Laravel 10                          |
+| AI Chat & Embedding | OpenAI GPT-3.5 / GPT-4            |
+| Vector DB         | Qdrant                              |
+| PDF Parser        | smalot/pdfparser                    |
+| Word Parser       | phpoffice/phpword                   |
+| HTTP              | guzzlehttp/guzzle                   |
+| Logging           | Eloquent (MySQL / SQLite)           |
+
+### ✅ Key Features
+
+- Answer questions based on internal files: PDF, DOCX, CSV, HTML, URL
+- Automatic text extraction and chunking for embeddings
+- Embedding vector search using Qdrant ANN
+- Avoids hallucination — throws clear error when no match found
+- Uses OpenAI GPT to generate final answers
+
+### ⚙️ Workflow
+
+1. Upload document
+2. Parse & split into chunks
+3. Generate embedding via OpenAI
+4. Store in Qdrant
+5. At question time: embed → search Qdrant → send to GPT → respond
+
+### 📈 Why Qdrant over MySQL?
+
+- Optimized for vector search (cosine, dot-product)
+- Fast real-time response even with millions of vectors
+- Supports ANN index, metadata, REST API
+- MySQL is slower, lacks native vector search
+
+> See full comparison tables above ☝️
+
+### 🔗 API Examples
+
+- `POST /api/chat` – Ask a question
+- `GET /train/{id}` – Train uploaded document
+- `GET /test-url?url=...` – Parse content from website
+- `GET /create-collection` – Create Qdrant collection
+- `GET /reindex` – Rebuild vector index
+
+---
