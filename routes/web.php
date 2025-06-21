@@ -9,42 +9,30 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+Route::get('/', fn() => view('welcome'));
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Kiểm tra PHP info
+Route::get('/test-phpinfo', fn() => phpinfo());
 
-Route::get('/test-phpinfo', function () {
-    phpinfo();
-});
+/**
+ * ==========================
+ * 📄 Test đọc nội dung tài liệu
+ * ==========================
+ */
 
+// Đọc file theo ID từ DB
 Route::get('/test-read/{id}', function ($id) {
     $document = Document::find($id);
-    if (!$document) {
-        return 'Không tìm thấy document';
-    }
+    if (!$document) return 'Không tìm thấy document';
 
     $content = DocumentParser::extract($document->path, $document->type);
-
-    dd($content); // Kiểm tra nội dung đọc được
+    dd($content);
 });
 
-Route::get('/test-url', function (\Illuminate\Http\Request $request) {
+// Đọc nội dung từ URL (html)
+Route::get('/test-url', function (Request $request) {
     $url = $request->query('url');
-
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        return response('URL không hợp lệ', 400);
-    }
+    if (!filter_var($url, FILTER_VALIDATE_URL)) return response('URL không hợp lệ', 400);
 
     try {
         $content = DocumentParser::extract($url, 'url');
@@ -54,24 +42,30 @@ Route::get('/test-url', function (\Illuminate\Http\Request $request) {
     }
 });
 
+/**
+ * ==========================
+ * ✂️ Chia đoạn văn bản (chunk)
+ * ==========================
+ */
+
+// Chunk nội dung tài liệu trong DB
 Route::get('/test-chunk/{id}', function ($id) {
     $document = Document::find($id);
     if (!$document) return 'Không tìm thấy document';
 
     $text = DocumentParser::extract($document->path, $document->type);
-    $chunks = TextChunker::chunk($text, 200); // chia mỗi đoạn ~200 từ
+    $chunks = TextChunker::chunk($text, 200);
 
     return response()->json([
         'chunk_count' => count($chunks),
-        'preview' => array_slice($chunks, 0, 3), // chỉ preview 3 đoạn đầu
+        'preview' => array_slice($chunks, 0, 3)
     ]);
 });
 
+// Chunk nội dung từ URL
 Route::get('/test-chunk-url', function (Request $request) {
     $url = $request->query('url');
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        return response('URL không hợp lệ', 400);
-    }
+    if (!filter_var($url, FILTER_VALIDATE_URL)) return response('URL không hợp lệ', 400);
 
     try {
         $text = DocumentParser::extract($url, 'url');
@@ -86,33 +80,40 @@ Route::get('/test-chunk-url', function (Request $request) {
     }
 });
 
+/**
+ * ==========================
+ * 🧠 Test tạo embedding
+ * ==========================
+ */
 Route::get('/test-embed', function () {
     $text = "Xin chào, đây là nội dung cần nhúng.";
     $vector = Embedder::embed($text);
 
     return response()->json([
         'dimensions' => count($vector),
-        'preview' => array_slice($vector, 0, 5),
+        'preview' => array_slice($vector, 0, 5)
     ]);
 });
 
-Route::get('/create-collection', function () {
-    $result = QdrantService::createCollection('doc_chunks');
-    return response()->json($result);
-});
+/**
+ * ==========================
+ * 🏗️ Tạo collection và huấn luyện (train)
+ * ==========================
+ */
 
+// Tạo collection mới trong Qdrant
+Route::get('/create-collection', fn() => response()->json(QdrantService::createCollection('doc_chunks')));
+
+// Train dữ liệu từ document trong DB
 Route::get('/train/{id}', function ($id) {
     $document = Document::find($id);
-    if (!$document) {
-        return response('Không tìm thấy tài liệu', 404);
-    }
+    if (!$document) return response('Không tìm thấy tài liệu', 404);
 
     $text = DocumentParser::extract($document->path, $document->type);
     $chunks = TextChunker::chunk($text, 200);
 
     foreach ($chunks as $index => $chunk) {
         $embedding = Embedder::embed($chunk);
-
         $payload = [
             'document_id' => $document->id,
             'chunk_index' => $index,
@@ -132,12 +133,10 @@ Route::get('/train/{id}', function ($id) {
     return response("Train thành công " . count($chunks) . " đoạn.");
 });
 
+// Train từ URL
 Route::get('/train-url', function (Request $request) {
     $url = $request->query('url');
-
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        return response('URL không hợp lệ', 400);
-    }
+    if (!filter_var($url, FILTER_VALIDATE_URL)) return response('URL không hợp lệ', 400);
 
     try {
         $text = DocumentParser::extract($url, 'url');
@@ -148,7 +147,6 @@ Route::get('/train-url', function (Request $request) {
 
             foreach ($subChunks as $subIndex => $subChunk) {
                 $embedding = Embedder::embed($subChunk);
-
                 $payload = [
                     'source_type' => 'url',
                     'source_url' => $url,
@@ -172,14 +170,21 @@ Route::get('/train-url', function (Request $request) {
     }
 });
 
+/**
+ * ==========================
+ * 🔍 Debug & Reindex
+ * ==========================
+ */
+
+// Gửi yêu cầu reindex
 Route::get('/reindex', function () {
     $response = Http::post('http://localhost:6333/collections/doc_chunks/segments/recreate_index');
     return $response->json();
 });
 
+// Debug vector theo ID
 Route::get('/debug-vectors/{id}', function ($id) {
-    $pointId = $id * 1000; // id đầu tiên trong train
-
+    $pointId = $id * 1000;
     $response = Http::get("http://localhost:6333/collections/doc_chunks/points/$pointId");
     return $response->json();
 });
