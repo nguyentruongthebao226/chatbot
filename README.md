@@ -7,15 +7,18 @@ Hệ thống chatbot nội bộ sử dụng tài liệu công ty để trả l�
 
 ## 🧩 Công nghệ sử dụng
 
-| Thành phần     | Công nghệ             |
-|----------------|------------------------|
-| Backend        | Laravel 10             |
-| Trí tuệ nhân tạo | OpenAI GPT-3.5 (chat), OpenAI Embeddings |
-| Vector Database | Qdrant                 |
-| Trích xuất PDF | smalot/pdfparser       |
-| Trích xuất Word | phpoffice/phpword     |
-| Giao tiếp HTTP | guzzlehttp/guzzle     |
-| Lưu log        | Eloquent (MySQL / SQLite) |
+| Thành phần         | Công nghệ                              |
+|--------------------|-----------------------------------------|
+| Backend            | Laravel 10                              |
+| Trí tuệ nhân tạo   | OpenAI GPT-3.5 (chat), OpenAI Embeddings |
+| Vector Database    | Qdrant                                  |
+| Trích xuất PDF     | smalot/pdfparser                        |
+| Trích xuất Word    | phpoffice/phpword                       |
+| Giao tiếp HTTP     | guzzlehttp/guzzle                      |
+| Lưu log            | Eloquent (MySQL / SQLite)              |
+| Web Server         | Nginx (chạy trong Docker)              |
+| Quản lý môi trường | Docker + Docker Compose                |
+
 
 🔹 Lý do chọn Qdrant thay vì MySQL
 | Tính năng                                  | Qdrant (Vector DB)                     | MySQL (RDBMS truyền thống)                    |
@@ -47,6 +50,22 @@ Hệ thống chatbot nội bộ sử dụng tài liệu công ty để trả l�
 OPENAI_API_KEY=your_openai_key_here
 QDRANT_HOST=http://localhost:6333
 ```
+---
+
+## 🚀 Hướng dẫn chạy source
+
+### 1. Chuẩn bị
+- Tạo file `.env` (có thể sao chép từ `.env.example`)
+
+### 2. Build và chạy container Docker
+```bash
+docker-compose up -d --build
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate
+docker-compose exec app php artisan config:clear
+docker-compose exec app php artisan migrate
+```
+
 ---
 
 ## 👨‍💻 Ghi chú 
