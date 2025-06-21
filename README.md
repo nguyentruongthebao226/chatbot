@@ -16,6 +16,27 @@ Hệ thống chatbot nội bộ sử dụng tài liệu công ty để trả l�
 | Giao tiếp HTTP | guzzlehttp/guzzle     |
 | Lưu log        | Eloquent (MySQL / SQLite) |
 
+🔹 Lý do chọn Qdrant thay vì MySQL
+| Tính năng                                  | Qdrant (Vector DB)                     | MySQL (RDBMS truyền thống)                    |
+|--------------------------------------------|----------------------------------------|-----------------------------------------------|
+| **Lưu vector số học (embedding)**          | ✅ Thiết kế chuyên biệt                | ⚠️ Lưu dạng JSON hoặc TEXT, không tối ưu       |
+| **Tìm kiếm ngữ nghĩa (semantic similarity)**| ✅ Có sẵn cosine / dot product         | ❌ Không hỗ trợ, cần code thủ công             |
+| **Top-k nearest neighbors (ANN)**          | ✅ Rất nhanh với cấu trúc HNSW/IVF... | ❌ Phải load toàn bộ dữ liệu để so sánh        |
+| **Khả năng mở rộng hàng triệu vector**     | ✅ Rất tốt, hiệu suất cao              | ❌ Chậm và nặng (dữ liệu dạng TEXT/JSON)       |
+| **API hỗ trợ vector search**               | ✅ RESTful / GRPC có sẵn               | ❌ Không có                                    |
+| **Hỗ trợ metadata**                        | ✅ Gắn được text, ID, file,...         | ⚠️ Có nhưng không liên kết với vector          |
+| **Ứng dụng trong AI / Chatbot**            | ✅ Chuẩn RAG, AI Search                | ❌ Không phù hợp                                |
+
+⚡ So sánh hiệu năng khi xử lý embedding
+| Tiêu chí                                      | Qdrant (Vector DB)                          | MySQL (lưu embedding JSON)                   |
+|----------------------------------------------|---------------------------------------------|----------------------------------------------|
+| **Tối ưu cho vector search**                 | ✅ Có (ANN index, HNSW, IVF...)             | ❌ Không có                                   |
+| **Tìm top-k gần nhất (cosine/dot-product)**  | ✅ Chỉ vài ms                               | ❌ Rất chậm nếu > 5000 rows                   |
+| **Index cho vector**                         | ✅ Có sẵn                                    | ❌ Không có                                   |
+| **Scale lớn**                                | ✅ Mượt với hàng triệu vector               | ❌ Query nặng nếu số rows lớn                 |
+| **Query thời gian thực (chatbot)**           | ✅ Tối ưu realtime                          | ❌ Dễ lag nếu so sánh embedding bằng PHP      |
+
+
 ---
 
 ## 📦 Triển khai & Môi trường
