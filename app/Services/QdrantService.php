@@ -21,7 +21,10 @@ class QdrantService
             'json' => [
                 'vectors' => [
                     'size' => $vectorSize,
-                    'distance' => 'Cosine'
+                    'distance' => 'Cosine',
+                ],
+                'hnsw_config' => [
+                    'full_scan_threshold' => 10
                 ]
             ]
         ]);
@@ -48,11 +51,12 @@ class QdrantService
         $response = $client->post("/collections/$collection/points/search", [
             'json' => [
                 'vector' => $vector,
-                'top' => $limit
+                'top' => $limit,
+                'with_payload' => true,
+                'with_vector' => false
             ]
         ]);
 
         return json_decode($response->getBody(), true)['result'];
     }
-
 }

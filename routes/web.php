@@ -7,6 +7,7 @@ use App\Services\QdrantService;
 use App\Services\TextChunker;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,7 +97,7 @@ Route::get('/test-embed', function () {
 });
 
 Route::get('/create-collection', function () {
-    $result = \App\Services\QdrantService::createCollection('doc_chunks');
+    $result = QdrantService::createCollection('doc_chunks');
     return response()->json($result);
 });
 
@@ -125,6 +126,7 @@ Route::get('/train/{id}', function ($id) {
         ];
 
         QdrantService::upsert('doc_chunks', [$point]);
+        logger('Đã insert vào Qdrant:', $point);
     }
 
     return response("Train thành công " . count($chunks) . " đoạn.");
@@ -168,4 +170,16 @@ Route::get('/train-url', function (Request $request) {
     } catch (\Exception $e) {
         return response('Lỗi: ' . $e->getMessage(), 500);
     }
+});
+
+Route::get('/reindex', function () {
+    $response = Http::post('http://localhost:6333/collections/doc_chunks/segments/recreate_index');
+    return $response->json();
+});
+
+Route::get('/debug-vectors/{id}', function ($id) {
+    $pointId = $id * 1000; // id đầu tiên trong train
+
+    $response = Http::get("http://localhost:6333/collections/doc_chunks/points/$pointId");
+    return $response->json();
 });
