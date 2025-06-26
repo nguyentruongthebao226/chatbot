@@ -20,6 +20,17 @@ class ChatController extends Controller
         $question = $request->input('question');
         $botId = $request->input('bot_id') ?? 1; // Default nếu chưa có multi bot
         $sender = $request->input('sender') ?? 'guest';
+        $sessionId = $request->input('session_id') ?? 1;
+
+        $session = \App\Models\ChatSession::where('session_id', $sessionId)
+            ->where('sender', $sender)
+            ->first();
+        if (!$session) {
+            $session = \App\Models\ChatSession::create([
+                'session_id' => $sessionId,
+                'sender' => $sender,
+            ]);
+        }
 
         // 1. Sinh embedding (dùng service mới)
         $embedding = \App\Services\EmbeddingService::generate($question);
@@ -57,7 +68,7 @@ class ChatController extends Controller
         // 5. Gọi OpenAI
         $openai = \OpenAI::client(env('OPENAI_API_KEY'));
         $chatResponse = $openai->chat()->create([
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-4o',
             'messages' => [
                 ['role' => 'system', 'content' => $systemContent],
                 ['role' => 'user', 'content' => $question],
@@ -67,7 +78,7 @@ class ChatController extends Controller
 
         Log::info('Tới save rồi');
         // 6. Lưu lại log, cả MySQL và Qdrant
-        $this->saveMessagesWithEmbedding($botId, $sender, $question, $answer, $embedding);
+        $this->saveMessagesWithEmbedding($session, $botId, $request, $answer, $embedding);
 
         // 7. Nếu là câu không trả lời được hoặc score thấp, trả lời lỗi
         if (str_contains($answer, '[StatusCode=404]') || $topScore < 0.25) {
@@ -167,32 +178,33 @@ class ChatController extends Controller
         try {
             // ✅ Save to MySQL first (để có data cho lần check tiếp theo)
             Log::info("Trước log questionQdrantId");
+            Log::info("request: ", [$request]);
             $chatMessage = ChatMessage::create([
                 'chat_session_id' => $session->id,
                 'bot_id' => $botId,
-                'sender' => $request->getSender(),
-                'question' => $request->getMessage(),
+                'sender'   => $request->input('sender'),
+                'question' => $request->input('question'),
                 'answer' => $answer,
                 'embedding_id' => null,
                 'question_embedding' => json_encode($questionEmbedding), // ✅ Ensure JSON encoding
                 'question_qdrant_id' => null, // Sẽ update sau
             ]);
+            Log::info("Sau log chat_session_id");
 
             // ✅ Save to Qdrant
             $questionsCollectionName = "questions_bot_{$botId}";
             $this->ensureQdrantCollection($questionsCollectionName);
             $questionQdrantId = $chatMessage->id; // Use MySQL ID as Qdrant ID
-            Log::info("Sau log questionQdrantId");
 
             QdrantService::upsert($questionsCollectionName, [[
                 'id' => $questionQdrantId,
                 'vector' => $questionEmbedding,
                 'payload' => [
                     'bot_id' => $botId,
-                    'question' => $request->getMessage(),
+                    'question' => $request->input('question'),
                     'answer' => $answer,
                     'session_id' => $session->id,
-                    'sender' => $request->getSender(),
+                    'sender'   => $request->input('sender'),
                     'mysql_id' => $chatMessage->id,
                     'created_at' => now()->toISOString()
                 ]
@@ -228,6 +240,7 @@ class ChatController extends Controller
     // ✅ Ensure questions collection exists
     private function ensureQdrantCollection(string $collectionName): void
     {
+        Log::info("log ensureQdrantCollection");
         try {
             $collections = QdrantService::listCollections();
             $collectionExists = collect($collections['result']['collections'] ?? [])

@@ -62,7 +62,7 @@ class ChatController_bk extends Controller
         // [6] Gọi OpenAI GPT chỉ dựa trên context tài liệu
         $openai = OpenAI::client(env('OPENAI_API_KEY'));
         $chatResponse = $openai->chat()->create([
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-4o',
             'messages' => [
                 [
                     'role' => 'system',
