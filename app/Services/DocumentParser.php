@@ -8,6 +8,7 @@ use PhpOffice\PhpWord\IOFactory as WordIO;
 use PhpOffice\PhpWord\Element\Text;
 use PhpOffice\PhpWord\Element\TextRun;
 use GuzzleHttp\Client;
+use PhpOffice\PhpSpreadsheet\IOFactory as ExcelIOFactory;
 
 class DocumentParser
 {
@@ -24,12 +25,8 @@ class DocumentParser
                 $text = (new PdfParser())->parseFile($fullPath)->getText();
                 break;
 
-            case 'csv':
-                $handle = fopen($fullPath, 'r');
-                while (($row = fgetcsv($handle)) !== false) {
-                    $text .= implode(' ', $row) . "\n";
-                }
-                fclose($handle);
+            case 'excel':
+                $text = self::extractTextFromExcel($fullPath);
                 break;
 
             case 'docx':
@@ -60,6 +57,18 @@ class DocumentParser
         }
 
         return trim($text);
+    }
+
+    protected static function extractTextFromExcel(string $path): string
+    {
+        $text = '';
+        $spreadsheet = ExcelIOFactory::load($path);
+        foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
+            foreach ($worksheet->toArray() as $row) {
+                $text .= implode(' ', $row) . "\n";
+            }
+        }
+        return $text;
     }
 
     /**

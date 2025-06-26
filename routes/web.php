@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Document;
+use App\Models\TrainingDocument;
 use App\Services\DocumentParser;
 use App\Services\Embedder;
 use App\Services\QdrantService;
@@ -22,7 +23,7 @@ Route::get('/test-phpinfo', fn() => phpinfo());
 
 // Đọc file theo ID từ DB
 Route::get('/test-read/{id}', function ($id) {
-    $document = Document::find($id);
+    $document = TrainingDocument::find($id);
     if (!$document) return 'Không tìm thấy document';
 
     $content = DocumentParser::extract($document->path, $document->type);
@@ -50,7 +51,7 @@ Route::get('/test-url', function (Request $request) {
 
 // Chunk nội dung tài liệu trong DB
 Route::get('/test-chunk/{id}', function ($id) {
-    $document = Document::find($id);
+    $document = TrainingDocument::find($id);
     if (!$document) return 'Không tìm thấy document';
 
     $text = DocumentParser::extract($document->path, $document->type);
@@ -106,7 +107,7 @@ Route::get('/create-collection', fn() => response()->json(QdrantService::createC
 
 // Train dữ liệu từ document trong DB
 Route::get('/train/{id}', function ($id) {
-    $document = Document::find($id);
+    $document = TrainingDocument::find($id);
     if (!$document) return response('Không tìm thấy tài liệu', 404);
 
     $text = DocumentParser::extract($document->path, $document->type);

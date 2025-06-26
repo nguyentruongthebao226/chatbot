@@ -73,7 +73,7 @@ docker-compose exec app php artisan migrate
 
 - Bot hoạt động hiệu quả khi dữ liệu đã được **chunk đều**, tránh quá dài (>200 từ)
 - Tài liệu HTML / URL cần được **lọc bỏ script, style, meta, inline css/js**
-- Có thể dễ dàng **thêm model ChatLog theo người dùng** nếu tích hợp hệ thống đăng nhập
+- Có thể dễ dàng **thêm model ChatMessage theo người dùng** nếu tích hợp hệ thống đăng nhập
 - Tránh gửi những câu hỏi nằm ngoài context đã train — bot sẽ không trả lời chính xác
 
 ---
@@ -119,7 +119,7 @@ docker-compose exec app php artisan migrate
 | `TextChunker`                   | Chia nhỏ văn bản thành các đoạn nhỏ để train                           |
 | `Embedder`                      | Gọi OpenAI để tạo embedding vector                                     |
 | `QdrantService`                 | Giao tiếp Qdrant: tạo collection, insert point, search                 |
-| `ChatLog`                       | Model lưu lịch sử câu hỏi, câu trả lời và vector                       |
+| `ChatMessage`                       | Model lưu lịch sử câu hỏi, câu trả lời và vector                       |
 
 ---
 
@@ -364,7 +364,7 @@ docker-compose exec app php artisan migrate
 
 * The bot performs best when the text is **evenly chunked**, avoid long segments (>200 words)
 * HTML / URL documents should have **script, style, meta, and inline JS/CSS removed**
-* Easy to **extend ChatLog by user** if login system is integrated
+* Easy to **extend ChatMessage by user** if login system is integrated
 * Avoid asking questions **outside trained document scope** – bot will not answer accurately
 
 ---
@@ -411,7 +411,7 @@ docker-compose exec app php artisan migrate
 | `TextChunker`    | Splits text into chunks for training               |
 | `Embedder`       | Calls OpenAI to generate embedding vectors         |
 | `QdrantService`  | Manages Qdrant: collections, inserts, searches     |
-| `ChatLog`        | Model for storing question, answer, and embeddings |
+| `ChatMessage`        | Model for storing question, answer, and embeddings |
 
 ---
 
